@@ -12,10 +12,10 @@ import {
   saveActivePricingConfig,
   formatPrice,
 } from '@/lib/priceCalculator';
-import type { DensityCategory, FabricType, LayerType, PricingConfig, Product } from '@/lib/types';
+import type { DensityCategory, FabricType, LayerType, PricingConfig, Product, ProductColor, QuiltPattern } from '@/lib/types';
 import toast from 'react-hot-toast';
 import {
-  Plus, Trash2, Pencil, X, Upload, ImageIcon, Star, Save, RotateCcw, ChevronDown, ChevronUp,
+  Plus, Trash2, Pencil, X, Upload, ImageIcon, Star, Save, RotateCcw, ChevronDown, ChevronUp, Palette, Grid3X3,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -27,6 +27,8 @@ const EMPTY_PRODUCT: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
   densityAddition: 0,
   features: [''],
   images: [],
+  colors: [],
+  quiltPatterns: [],
   thickness: 5,
   isActive: true,
   badge: '',
@@ -50,6 +52,10 @@ export default function AdminProductsPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const colorImageRef = useRef<HTMLInputElement>(null);
+  const quiltImageRef = useRef<HTMLInputElement>(null);
+  const [colorImageTarget, setColorImageTarget] = useState<number>(-1);
+  const [quiltImageTarget, setQuiltImageTarget] = useState<number>(-1);
 
   // ======================== LOAD DATA ========================
   useEffect(() => {
@@ -155,6 +161,8 @@ export default function AdminProductsPage() {
       densityAddition: product.densityAddition,
       features: product.features.length > 0 ? [...product.features] : [''],
       images: [...product.images],
+      colors: product.colors ? [...product.colors] : [],
+      quiltPatterns: product.quiltPatterns ? [...product.quiltPatterns] : [],
       thickness: product.thickness,
       isActive: product.isActive,
       badge: product.badge || '',
@@ -196,6 +204,8 @@ export default function AdminProductsPage() {
         densityAddition: form.densityAddition,
         features,
         images,
+        colors: form.colors.filter(c => c.name.trim()),
+        quiltPatterns: form.quiltPatterns.filter(q => q.name.trim()),
         thickness: form.thickness,
         isActive: form.isActive,
         badge: form.badge?.trim() || undefined,
@@ -226,6 +236,8 @@ export default function AdminProductsPage() {
         densityAddition: form.densityAddition,
         features,
         images: [...form.images, ...imagePreviews],
+        colors: form.colors.filter(c => c.name.trim()),
+        quiltPatterns: form.quiltPatterns.filter(q => q.name.trim()),
         thickness: form.thickness,
         isActive: form.isActive,
         badge: form.badge?.trim() || undefined,
@@ -344,7 +356,10 @@ export default function AdminProductsPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-bold text-[#1a1a2e]">{formatPrice(product.basePrice)}</p>
-                        <p className="text-xs text-gray-400">{product.images.length} image{product.images.length !== 1 ? 's' : ''}</p>
+                        <p className="text-xs text-gray-400">{product.images.length} image{product.images.length !== 1 ? 's' : ''}
+                          {product.colors?.length ? ` • ${product.colors.length} color${product.colors.length !== 1 ? 's' : ''}` : ''}
+                          {product.quiltPatterns?.length ? ` • ${product.quiltPatterns.length} quilt${product.quiltPatterns.length !== 1 ? 's' : ''}` : ''}
+                        </p>
                       </div>
                     </div>
                     {product.description && (
@@ -559,6 +574,163 @@ export default function AdminProductsPage() {
                   <button onClick={addFeature} className="mt-2 text-sm text-[#1a1a2e] hover:underline flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add feature
                   </button>
+                </div>
+
+                {/* Colors */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                    <Palette className="w-4 h-4" /> Available Colors
+                  </label>
+                  <div className="space-y-3">
+                    {form.colors.map((color, idx) => (
+                      <div key={idx} className="flex gap-2 items-start bg-gray-50 rounded-xl p-3">
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <input
+                            className="input-field"
+                            value={color.name}
+                            onChange={e => {
+                              const updated = [...form.colors];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setForm(f => ({ ...f, colors: updated }));
+                            }}
+                            placeholder="Color name (e.g. Maroon)"
+                          />
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={color.hex || '#000000'}
+                              onChange={e => {
+                                const updated = [...form.colors];
+                                updated[idx] = { ...updated[idx], hex: e.target.value };
+                                setForm(f => ({ ...f, colors: updated }));
+                              }}
+                              className="w-10 h-10 rounded-lg border cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-500">{color.hex}</span>
+                          </div>
+                        </div>
+                        {/* Color image */}
+                        <div className="flex items-center gap-2">
+                          {color.image ? (
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border">
+                              <Image src={getImageUrl(color.image)} alt="" fill className="object-cover" sizes="40px" unoptimized />
+                              <button onClick={() => {
+                                const updated = [...form.colors];
+                                updated[idx] = { ...updated[idx], image: undefined };
+                                setForm(f => ({ ...f, colors: updated }));
+                              }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
+                                <X className="w-3 h-3 text-white" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setColorImageTarget(idx); colorImageRef.current?.click(); }}
+                              className="w-10 h-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#1a1a2e]"
+                              title="Upload color image"
+                            >
+                              <Upload className="w-3.5 h-3.5 text-gray-400" />
+                            </button>
+                          )}
+                          <button onClick={() => setForm(f => ({ ...f, colors: f.colors.filter((_, i) => i !== idx) }))}
+                            className="p-1.5 hover:bg-red-50 rounded-lg">
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setForm(f => ({ ...f, colors: [...f.colors, { name: '', hex: '#000000' }] }))}
+                    className="mt-2 text-sm text-[#1a1a2e] hover:underline flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add color
+                  </button>
+                  <input
+                    ref={colorImageRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file || colorImageTarget < 0) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const updated = [...form.colors];
+                        updated[colorImageTarget] = { ...updated[colorImageTarget], image: reader.result as string };
+                        setForm(f => ({ ...f, colors: updated }));
+                      };
+                      reader.readAsDataURL(file);
+                      if (colorImageRef.current) colorImageRef.current.value = '';
+                    }}
+                  />
+                </div>
+
+                {/* Quilt Patterns */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                    <Grid3X3 className="w-4 h-4" /> Quilt Patterns
+                  </label>
+                  <div className="space-y-3">
+                    {form.quiltPatterns.map((quilt, idx) => (
+                      <div key={idx} className="flex gap-2 items-center bg-gray-50 rounded-xl p-3">
+                        <input
+                          className="input-field flex-1"
+                          value={quilt.name}
+                          onChange={e => {
+                            const updated = [...form.quiltPatterns];
+                            updated[idx] = { ...updated[idx], name: e.target.value };
+                            setForm(f => ({ ...f, quiltPatterns: updated }));
+                          }}
+                          placeholder="Pattern name (e.g. Diamond, Wave)"
+                        />
+                        {quilt.image && quilt.image !== '' ? (
+                          <div className="relative w-16 h-16 rounded-lg overflow-hidden border shrink-0">
+                            <Image src={getImageUrl(quilt.image)} alt="" fill className="object-cover" sizes="64px" unoptimized />
+                            <button onClick={() => {
+                              const updated = [...form.quiltPatterns];
+                              updated[idx] = { ...updated[idx], image: '' };
+                              setForm(f => ({ ...f, quiltPatterns: updated }));
+                            }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
+                              <X className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setQuiltImageTarget(idx); quiltImageRef.current?.click(); }}
+                            className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-[#1a1a2e] shrink-0"
+                            title="Upload quilt image"
+                          >
+                            <Upload className="w-4 h-4 text-gray-400" />
+                            <span className="text-[10px] text-gray-400">Image</span>
+                          </button>
+                        )}
+                        <button onClick={() => setForm(f => ({ ...f, quiltPatterns: f.quiltPatterns.filter((_, i) => i !== idx) }))}
+                          className="p-1.5 hover:bg-red-50 rounded-lg shrink-0">
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setForm(f => ({ ...f, quiltPatterns: [...f.quiltPatterns, { name: '', image: '' }] }))}
+                    className="mt-2 text-sm text-[#1a1a2e] hover:underline flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add quilt pattern
+                  </button>
+                  <input
+                    ref={quiltImageRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file || quiltImageTarget < 0) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const updated = [...form.quiltPatterns];
+                        updated[quiltImageTarget] = { ...updated[quiltImageTarget], image: reader.result as string };
+                        setForm(f => ({ ...f, quiltPatterns: updated }));
+                      };
+                      reader.readAsDataURL(file);
+                      if (quiltImageRef.current) quiltImageRef.current.value = '';
+                    }}
+                  />
                 </div>
 
                 {/* Active toggle */}

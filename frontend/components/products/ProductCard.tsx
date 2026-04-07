@@ -20,6 +20,12 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 0,
     features: ['HD Foam Core', 'Cotton Fabric', 'Medium Firm', '5yr warranty'],
     images: ['/products/rare-queen.jpg'],
+    colors: [
+      { name: 'Beige', hex: '#F5F5DC' },
+      { name: 'Light Grey', hex: '#D3D3D3' },
+      { name: 'White', hex: '#FFFFFF' },
+    ],
+    quiltPatterns: [],
     thickness: 5,
     isActive: true,
     badge: 'Value Pick',
@@ -37,6 +43,12 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 500,
     features: ['Memory Foam Top', 'HD Foam Core', 'Velvet Fabric', '7yr warranty'],
     images: ['/products/epic-queen.jpg'],
+    colors: [
+      { name: 'Maroon', hex: '#800000' },
+      { name: 'Navy Blue', hex: '#000080' },
+      { name: 'Grey', hex: '#808080' },
+    ],
+    quiltPatterns: [],
     thickness: 6,
     isActive: true,
     badge: 'Best Seller',
@@ -54,6 +66,13 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 700,
     features: ['Natural Latex', 'Memory Foam', 'Coir Base', 'Bamboo Fabric', '10yr warranty'],
     images: ['/products/legendary-king.jpg'],
+    colors: [
+      { name: 'Royal Blue', hex: '#4169E1' },
+      { name: 'Pearl White', hex: '#FDEEF4' },
+      { name: 'Charcoal', hex: '#36454F' },
+      { name: 'Gold', hex: '#DAA520' },
+    ],
+    quiltPatterns: [],
     thickness: 8,
     isActive: true,
     badge: 'Luxury',
@@ -71,6 +90,11 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 500,
     features: ['Memory Foam', 'Knitted Fabric', 'Soft-Medium', '7yr warranty'],
     images: ['/products/epic-single.jpg'],
+    colors: [
+      { name: 'Blue', hex: '#4682B4' },
+      { name: 'Grey', hex: '#808080' },
+    ],
+    quiltPatterns: [],
     thickness: 5,
     isActive: true,
     badge: undefined,
@@ -88,6 +112,12 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 700,
     features: ['Pocket Spring', 'Memory Foam', 'Velvet Fabric', '10yr warranty'],
     images: ['/products/legendary-queen.jpg'],
+    colors: [
+      { name: 'Ivory', hex: '#FFFFF0' },
+      { name: 'Dark Grey', hex: '#505050' },
+      { name: 'Burgundy', hex: '#722F37' },
+    ],
+    quiltPatterns: [],
     thickness: 8,
     isActive: true,
     badge: 'New',
@@ -105,6 +135,11 @@ const FEATURED_PRODUCTS: Product[] = [
     densityAddition: 0,
     features: ['Coir Layer', 'HD Foam', 'Cotton Fabric', '5yr warranty'],
     images: ['/products/rare-double.jpg'],
+    colors: [
+      { name: 'Beige', hex: '#F5F5DC' },
+      { name: 'Light Blue', hex: '#ADD8E6' },
+    ],
+    quiltPatterns: [],
     thickness: 5,
     isActive: true,
     badge: 'Ortho Pick',
@@ -202,7 +237,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Features */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-3">
           {product.features.slice(0, 3).map(f => (
             <span key={f} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-full">
               <Check className="w-3 h-3 text-green-500" />
@@ -210,6 +245,24 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           ))}
         </div>
+
+        {/* Color Swatches */}
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex items-center gap-1.5 mb-4">
+            {product.colors.slice(0, 5).map((color, i) => (
+              <div
+                key={i}
+                className="w-5 h-5 rounded-full border border-gray-300"
+                style={{ backgroundColor: color.hex }}
+                title={color.name}
+              />
+            ))}
+            {product.colors.length > 5 && (
+              <span className="text-xs text-gray-400">+{product.colors.length - 5}</span>
+            )}
+            <span className="text-xs text-gray-400 ml-1">{product.colors.length} colors</span>
+          </div>
+        )}
 
         {/* Price */}
         <div className="flex items-end gap-2 mb-4">

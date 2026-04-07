@@ -7,6 +7,17 @@ export type FabricType = 'cotton' | 'velvet' | 'bamboo' | 'knitted';
 
 export type HardnessLevel = 'soft' | 'medium' | 'firm';
 
+export interface ProductColor {
+  name: string;    // e.g. "Maroon", "Navy Blue"
+  hex: string;     // e.g. "#800000"
+  image?: string;  // optional image showing mattress in that color
+}
+
+export interface QuiltPattern {
+  name: string;    // e.g. "Diamond", "Wave", "Classic"
+  image: string;   // image of the quilt pattern
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -16,6 +27,8 @@ export interface Product {
   densityAddition: number;
   features: string[];
   images: string[];
+  colors: ProductColor[];
+  quiltPatterns: QuiltPattern[];
   thickness: number;
   isActive: boolean;
   badge?: string;

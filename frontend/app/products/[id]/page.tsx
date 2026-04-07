@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ShoppingCart, Star, Check, ChevronLeft, ChevronRight, Truck, Shield, Ruler } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Star, Check, ChevronLeft, ChevronRight, Truck, Shield, Ruler, Palette, Grid3X3 } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { DENSITY_INFO, formatPrice } from '@/lib/priceCalculator';
 import { FEATURED_PRODUCTS } from '@/components/products/ProductCard';
@@ -229,6 +229,56 @@ export default function ProductDetailPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Available Colors */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-[#e8b85d]" /> Available Colors
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map((color, idx) => (
+                    <div key={idx} className="flex flex-col items-center gap-1.5">
+                      {color.image ? (
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-[#1a1a2e] transition-colors cursor-pointer">
+                          <Image src={getImageUrl(color.image)} alt={color.name} fill className="object-cover" sizes="64px" unoptimized />
+                        </div>
+                      ) : (
+                        <div
+                          className="w-16 h-16 rounded-xl border-2 border-gray-200 hover:border-[#1a1a2e] transition-colors cursor-pointer"
+                          style={{ backgroundColor: color.hex }}
+                          title={color.name}
+                        />
+                      )}
+                      <span className="text-xs text-gray-600 font-medium">{color.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quilt Patterns */}
+            {product.quiltPatterns && product.quiltPatterns.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-[#1a1a2e] mb-3 flex items-center gap-2">
+                  <Grid3X3 className="w-4 h-4 text-[#e8b85d]" /> Quilt Patterns
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {product.quiltPatterns.map((quilt, idx) => (
+                    <div key={idx} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 hover:border-[#1a1a2e] transition-colors cursor-pointer">
+                      {quilt.image && (
+                        <div className="relative aspect-square">
+                          <Image src={getImageUrl(quilt.image)} alt={quilt.name} fill className="object-cover" sizes="200px" unoptimized />
+                        </div>
+                      )}
+                      <div className="p-2 text-center">
+                        <span className="text-sm font-medium text-gray-700">{quilt.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

@@ -150,16 +150,13 @@ const FEATURED_PRODUCTS: Product[] = [
   },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 interface ProductCardProps {
   product: Product;
 }
 
 const getImageUrl = (src: string) => {
   if (!src) return '/products/rare-queen.jpg';
-  if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/products')) return src;
-  if (src.startsWith('/uploads')) return `${API_URL}${src}`;
+  if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/')) return src;
   return src;
 };
 

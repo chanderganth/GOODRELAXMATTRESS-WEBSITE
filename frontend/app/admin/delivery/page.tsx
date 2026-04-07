@@ -50,7 +50,7 @@ export default function AdminDeliveryPage() {
         result.push(part);
       }
     }
-    return [...new Set(result)];
+    return Array.from(new Set(result));
   };
 
   const handleAdd = () => {
@@ -95,7 +95,7 @@ export default function AdminDeliveryPage() {
     const zone = zones.find(z => z.id === id);
     if (!zone) return;
     const newPincodes = parsePincodes(input);
-    const merged = [...new Set([...zone.pincodes, ...newPincodes])];
+    const merged = Array.from(new Set([...zone.pincodes, ...newPincodes]));
     updateZone(id, { pincodes: merged });
   };
 

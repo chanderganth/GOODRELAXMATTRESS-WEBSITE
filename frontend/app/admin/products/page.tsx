@@ -54,8 +54,8 @@ export default function AdminProductsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const colorImageRef = useRef<HTMLInputElement>(null);
   const quiltImageRef = useRef<HTMLInputElement>(null);
-  const [colorImageTarget, setColorImageTarget] = useState<number>(-1);
-  const [quiltImageTarget, setQuiltImageTarget] = useState<number>(-1);
+  const colorImageTargetRef = useRef<number>(-1);
+  const quiltImageTargetRef = useRef<number>(-1);
 
   // ======================== LOAD DATA ========================
   useEffect(() => {
@@ -638,7 +638,7 @@ export default function AdminProductsPage() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => { setColorImageTarget(idx); colorImageRef.current?.click(); }}
+                              onClick={() => { colorImageTargetRef.current = idx; colorImageRef.current?.click(); }}
                               className="w-10 h-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#1a1a2e]"
                               title="Upload color image"
                             >
@@ -664,8 +664,8 @@ export default function AdminProductsPage() {
                     className="hidden"
                     onChange={e => {
                       const file = e.target.files?.[0];
-                      if (!file || colorImageTarget < 0) return;
-                      const targetIdx = colorImageTarget;
+                      const targetIdx = colorImageTargetRef.current;
+                      if (!file || targetIdx < 0) return;
                       const reader = new FileReader();
                       reader.onload = () => {
                         setForm(f => ({
@@ -713,7 +713,7 @@ export default function AdminProductsPage() {
                           </div>
                         ) : (
                           <button
-                            onClick={() => { setQuiltImageTarget(idx); quiltImageRef.current?.click(); }}
+                            onClick={() => { quiltImageTargetRef.current = idx; quiltImageRef.current?.click(); }}
                             className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-[#1a1a2e] shrink-0"
                             title="Upload quilt image"
                           >
@@ -739,8 +739,8 @@ export default function AdminProductsPage() {
                     className="hidden"
                     onChange={e => {
                       const file = e.target.files?.[0];
-                      if (!file || quiltImageTarget < 0) return;
-                      const targetIdx = quiltImageTarget;
+                      const targetIdx = quiltImageTargetRef.current;
+                      if (!file || targetIdx < 0) return;
                       const reader = new FileReader();
                       reader.onload = () => {
                         setForm(f => ({

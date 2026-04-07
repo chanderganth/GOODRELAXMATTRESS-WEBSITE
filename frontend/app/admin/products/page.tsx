@@ -52,10 +52,6 @@ export default function AdminProductsPage() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const colorImageRef = useRef<HTMLInputElement>(null);
-  const quiltImageRef = useRef<HTMLInputElement>(null);
-  const colorImageTargetRef = useRef<number>(-1);
-  const quiltImageTargetRef = useRef<number>(-1);
 
   // ======================== LOAD DATA ========================
   useEffect(() => {
@@ -622,28 +618,42 @@ export default function AdminProductsPage() {
                             <span className="text-xs text-gray-500">{color.hex}</span>
                           </div>
                         </div>
-                        {/* Color image */}
+                        {/* Color image - inline input per row */}
                         <div className="flex items-center gap-2">
                           {color.image ? (
                             <div className="relative w-10 h-10 rounded-lg overflow-hidden border">
                               <Image src={getImageUrl(color.image)} alt="" fill className="object-cover" sizes="40px" unoptimized />
                               <button onClick={() => {
-                              setForm(f => ({
-                                ...f,
-                                colors: f.colors.map((c, i) => i === idx ? { ...c, image: undefined } : c),
-                              }));
-                            }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
+                                setForm(f => ({
+                                  ...f,
+                                  colors: f.colors.map((c, i) => i === idx ? { ...c, image: undefined } : c),
+                                }));
+                              }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
                                 <X className="w-3 h-3 text-white" />
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => { colorImageTargetRef.current = idx; colorImageRef.current?.click(); }}
-                              className="w-10 h-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#1a1a2e]"
-                              title="Upload color image"
-                            >
+                            <label className="w-10 h-10 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#1a1a2e] cursor-pointer" title="Upload color image">
                               <Upload className="w-3.5 h-3.5 text-gray-400" />
-                            </button>
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    const dataUrl = reader.result as string;
+                                    setForm(f => ({
+                                      ...f,
+                                      colors: f.colors.map((c, i) => i === idx ? { ...c, image: dataUrl } : c),
+                                    }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                              />
+                            </label>
                           )}
                           <button onClick={() => setForm(f => ({ ...f, colors: f.colors.filter((_, i) => i !== idx) }))}
                             className="p-1.5 hover:bg-red-50 rounded-lg">
@@ -657,26 +667,6 @@ export default function AdminProductsPage() {
                     className="mt-2 text-sm text-[#1a1a2e] hover:underline flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add color
                   </button>
-                  <input
-                    ref={colorImageRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      const targetIdx = colorImageTargetRef.current;
-                      if (!file || targetIdx < 0) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setForm(f => ({
-                          ...f,
-                          colors: f.colors.map((c, i) => i === targetIdx ? { ...c, image: reader.result as string } : c),
-                        }));
-                      };
-                      reader.readAsDataURL(file);
-                      if (colorImageRef.current) colorImageRef.current.value = '';
-                    }}
-                  />
                 </div>
 
                 {/* Quilt Patterns */}
@@ -712,14 +702,28 @@ export default function AdminProductsPage() {
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => { quiltImageTargetRef.current = idx; quiltImageRef.current?.click(); }}
-                            className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-[#1a1a2e] shrink-0"
-                            title="Upload quilt image"
-                          >
+                          <label className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:border-[#1a1a2e] shrink-0 cursor-pointer" title="Upload quilt image">
                             <Upload className="w-4 h-4 text-gray-400" />
                             <span className="text-[10px] text-gray-400">Image</span>
-                          </button>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  const dataUrl = reader.result as string;
+                                  setForm(f => ({
+                                    ...f,
+                                    quiltPatterns: f.quiltPatterns.map((q, i) => i === idx ? { ...q, image: dataUrl } : q),
+                                  }));
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
                         )}
                         <button onClick={() => setForm(f => ({ ...f, quiltPatterns: f.quiltPatterns.filter((_, i) => i !== idx) }))}
                           className="p-1.5 hover:bg-red-50 rounded-lg shrink-0">
@@ -732,26 +736,6 @@ export default function AdminProductsPage() {
                     className="mt-2 text-sm text-[#1a1a2e] hover:underline flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add quilt pattern
                   </button>
-                  <input
-                    ref={quiltImageRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      const targetIdx = quiltImageTargetRef.current;
-                      if (!file || targetIdx < 0) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setForm(f => ({
-                          ...f,
-                          quiltPatterns: f.quiltPatterns.map((q, i) => i === targetIdx ? { ...q, image: reader.result as string } : q),
-                        }));
-                      };
-                      reader.readAsDataURL(file);
-                      if (quiltImageRef.current) quiltImageRef.current.value = '';
-                    }}
-                  />
                 </div>
 
                 {/* Active toggle */}

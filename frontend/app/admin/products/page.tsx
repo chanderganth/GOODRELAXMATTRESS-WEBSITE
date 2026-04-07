@@ -72,11 +72,18 @@ export default function AdminProductsPage() {
 
   const loadProducts = () => {
     setLoadingProducts(true);
+    const localProducts = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
+
     api.products.getAll()
-      .then(res => setProducts((res as { success: boolean; data: Product[] }).data))
+      .then(res => {
+        const apiProducts = (res as { success: boolean; data: Product[] }).data;
+        // Merge: API products + local-only products (not in API)
+        const apiIds = new Set(apiProducts.map(p => p.id));
+        const localOnly = localProducts.filter(p => !apiIds.has(p.id));
+        setProducts([...apiProducts, ...localOnly]);
+      })
       .catch(() => {
-        const cached = localStorage.getItem('admin_products');
-        if (cached) setProducts(JSON.parse(cached));
+        setProducts(localProducts);
       })
       .finally(() => setLoadingProducts(false));
   };
@@ -227,6 +234,9 @@ export default function AdminProductsPage() {
       // Fallback: save to localStorage
       const features = form.features.filter(f => f.trim() !== '');
       const now = new Date().toISOString();
+      const existing = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
+      const oldProduct = editingId ? existing.find(p => p.id === editingId) : null;
+
       const product: Product = {
         id: editingId || `local-${Date.now()}`,
         name: form.name.trim(),
@@ -243,11 +253,10 @@ export default function AdminProductsPage() {
         badge: form.badge?.trim() || undefined,
         rating: form.rating,
         reviewCount: form.reviewCount,
-        createdAt: now,
+        createdAt: oldProduct?.createdAt || now,
         updatedAt: now,
       };
 
-      const existing = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
       if (editingId) {
         const idx = existing.findIndex(p => p.id === editingId);
         if (idx >= 0) existing[idx] = product; else existing.push(product);
@@ -255,8 +264,8 @@ export default function AdminProductsPage() {
         existing.push(product);
       }
       localStorage.setItem('admin_products', JSON.stringify(existing));
-      setProducts(existing);
-      toast.success('Saved locally (offline mode)');
+      setProducts([...existing]);
+      toast.success(editingId ? 'Product updated (offline)' : 'Saved locally (offline mode)');
       closeForm();
     } finally {
       setSaving(false);

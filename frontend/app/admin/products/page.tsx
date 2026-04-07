@@ -18,7 +18,6 @@ import {
   Plus, Trash2, Pencil, X, Upload, ImageIcon, Star, Save, RotateCcw, ChevronDown, ChevronUp, Palette, Grid3X3,
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const EMPTY_PRODUCT: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '',
   category: '28D_Rare',
@@ -53,6 +52,17 @@ export default function AdminProductsPage() {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ======================== INSTANT IMAGE UPLOAD HELPER ========================
+  const uploadSingleImage = async (file: File): Promise<string | null> => {
+    try {
+      const res = await api.products.uploadImages([file]);
+      return res.data[0] || null;
+    } catch {
+      toast.error('Image upload failed');
+      return null;
+    }
+  };
+
   // ======================== LOAD DATA ========================
   useEffect(() => {
     api.products.getPricing()
@@ -68,18 +78,14 @@ export default function AdminProductsPage() {
 
   const loadProducts = () => {
     setLoadingProducts(true);
-    const localProducts = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
-
     api.products.getAll()
       .then(res => {
         const apiProducts = (res as { success: boolean; data: Product[] }).data;
-        // Merge: API products + local-only products (not in API)
-        const apiIds = new Set(apiProducts.map(p => p.id));
-        const localOnly = localProducts.filter(p => !apiIds.has(p.id));
-        setProducts([...apiProducts, ...localOnly]);
+        setProducts(apiProducts);
       })
       .catch(() => {
-        setProducts(localProducts);
+        toast.error('Failed to load products');
+        setProducts([]);
       })
       .finally(() => setLoadingProducts(false));
   };
@@ -218,51 +224,16 @@ export default function AdminProductsPage() {
 
       if (editingId) {
         await api.products.update(editingId, productData);
-        toast.success('Product updated');
+        toast.success('Product updated!');
       } else {
         await api.products.create(productData);
-        toast.success('Product created');
+        toast.success('Product created!');
       }
 
       loadProducts();
       closeForm();
-    } catch {
-      // Fallback: save to localStorage
-      const features = form.features.filter(f => f.trim() !== '');
-      const now = new Date().toISOString();
-      const existing = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
-      const oldProduct = editingId ? existing.find(p => p.id === editingId) : null;
-
-      const product: Product = {
-        id: editingId || `local-${Date.now()}`,
-        name: form.name.trim(),
-        category: form.category,
-        description: form.description.trim(),
-        basePrice: form.basePrice,
-        densityAddition: form.densityAddition,
-        features,
-        images: [...form.images, ...imagePreviews],
-        colors: form.colors.filter(c => c.name.trim()),
-        quiltPatterns: form.quiltPatterns.filter(q => q.name.trim()),
-        thickness: form.thickness,
-        isActive: form.isActive,
-        badge: form.badge?.trim() || undefined,
-        rating: form.rating,
-        reviewCount: form.reviewCount,
-        createdAt: oldProduct?.createdAt || now,
-        updatedAt: now,
-      };
-
-      if (editingId) {
-        const idx = existing.findIndex(p => p.id === editingId);
-        if (idx >= 0) existing[idx] = product; else existing.push(product);
-      } else {
-        existing.push(product);
-      }
-      localStorage.setItem('admin_products', JSON.stringify(existing));
-      setProducts([...existing]);
-      toast.success(editingId ? 'Product updated (offline)' : 'Saved locally (offline mode)');
-      closeForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save product');
     } finally {
       setSaving(false);
     }
@@ -274,19 +245,15 @@ export default function AdminProductsPage() {
       await api.products.delete(id);
       toast.success('Product deleted');
       loadProducts();
-    } catch {
-      const existing = JSON.parse(localStorage.getItem('admin_products') || '[]') as Product[];
-      const updated = existing.filter(p => p.id !== id);
-      localStorage.setItem('admin_products', JSON.stringify(updated));
-      setProducts(prev => prev.filter(p => p.id !== id));
-      toast.success('Removed locally');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete product');
     }
   };
 
   // ======================== IMAGE URL HELPER ========================
   const getImageUrl = (src: string) => {
-    if (src.startsWith('http') || src.startsWith('data:')) return src;
-    if (src.startsWith('/uploads')) return `${API_URL}${src}`;
+    if (!src) return '';
+    if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/')) return src;
     return src;
   };
 
@@ -639,18 +606,19 @@ export default function AdminProductsPage() {
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 className="hidden"
-                                onChange={e => {
+                                onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (!file) return;
-                                  const reader = new FileReader();
-                                  reader.onload = () => {
-                                    const dataUrl = reader.result as string;
+                                  toast.loading('Uploading...', { id: 'color-img' });
+                                  const url = await uploadSingleImage(file);
+                                  toast.dismiss('color-img');
+                                  if (url) {
                                     setForm(f => ({
                                       ...f,
-                                      colors: f.colors.map((c, i) => i === idx ? { ...c, image: dataUrl } : c),
+                                      colors: f.colors.map((c, i) => i === idx ? { ...c, image: url } : c),
                                     }));
-                                  };
-                                  reader.readAsDataURL(file);
+                                    toast.success('Color image uploaded');
+                                  }
                                 }}
                               />
                             </label>
@@ -709,18 +677,19 @@ export default function AdminProductsPage() {
                               type="file"
                               accept="image/jpeg,image/png,image/webp"
                               className="hidden"
-                              onChange={e => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
-                                const reader = new FileReader();
-                                reader.onload = () => {
-                                  const dataUrl = reader.result as string;
+                                toast.loading('Uploading...', { id: 'quilt-img' });
+                                const url = await uploadSingleImage(file);
+                                toast.dismiss('quilt-img');
+                                if (url) {
                                   setForm(f => ({
                                     ...f,
-                                    quiltPatterns: f.quiltPatterns.map((q, i) => i === idx ? { ...q, image: dataUrl } : q),
+                                    quiltPatterns: f.quiltPatterns.map((q, i) => i === idx ? { ...q, image: url } : q),
                                   }));
-                                };
-                                reader.readAsDataURL(file);
+                                  toast.success('Quilt image uploaded');
+                                }
                               }}
                             />
                           </label>

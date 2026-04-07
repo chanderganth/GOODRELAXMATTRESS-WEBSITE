@@ -24,14 +24,7 @@ export default function ProductsPage() {
         }
       })
       .catch(() => {
-        // Also check localStorage for admin-added products
-        const cached = localStorage.getItem('admin_products');
-        if (cached) {
-          const local = JSON.parse(cached) as Product[];
-          const localIds = new Set(local.map(p => p.id));
-          const merged = [...local, ...FEATURED_PRODUCTS.filter(p => !localIds.has(p.id))];
-          setAllProducts(merged);
-        }
+        // Keep static FEATURED_PRODUCTS on error
       });
   }, []);
 

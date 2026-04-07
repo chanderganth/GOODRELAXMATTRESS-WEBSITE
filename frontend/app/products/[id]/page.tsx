@@ -12,12 +12,9 @@ import { useCart } from '@/context/CartContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 const getImageUrl = (src: string) => {
   if (!src) return '/products/rare-queen.jpg';
-  if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/products')) return src;
-  if (src.startsWith('/uploads')) return `${API_URL}${src}`;
+  if (src.startsWith('http') || src.startsWith('data:') || src.startsWith('/')) return src;
   return src;
 };
 
@@ -31,7 +28,7 @@ export default function ProductDetailPage() {
   const { addStandard } = useCart();
 
   useEffect(() => {
-    // Try API first, then static products, then localStorage
+    // Try API first, then static products
     const findProduct = async () => {
       try {
         const res = await api.products.getById(id);
@@ -42,15 +39,7 @@ export default function ProductDetailPage() {
       }
 
       const staticMatch = FEATURED_PRODUCTS.find(p => p.id === id);
-      if (staticMatch) { setProduct(staticMatch); return; }
-
-      // Check localStorage
-      const cached = localStorage.getItem('admin_products');
-      if (cached) {
-        const local = JSON.parse(cached) as Product[];
-        const match = local.find(p => p.id === id);
-        if (match) { setProduct(match); return; }
-      }
+      if (staticMatch) { setProduct(staticMatch); }
     };
 
     findProduct().finally(() => setLoading(false));

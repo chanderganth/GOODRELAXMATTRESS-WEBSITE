@@ -598,9 +598,11 @@ export default function AdminProductsPage() {
                             className="input-field"
                             value={color.name}
                             onChange={e => {
-                              const updated = [...form.colors];
-                              updated[idx] = { ...updated[idx], name: e.target.value };
-                              setForm(f => ({ ...f, colors: updated }));
+                              const val = e.target.value;
+                              setForm(f => ({
+                                ...f,
+                                colors: f.colors.map((c, i) => i === idx ? { ...c, name: val } : c),
+                              }));
                             }}
                             placeholder="Color name (e.g. Maroon)"
                           />
@@ -609,9 +611,11 @@ export default function AdminProductsPage() {
                               type="color"
                               value={color.hex || '#000000'}
                               onChange={e => {
-                                const updated = [...form.colors];
-                                updated[idx] = { ...updated[idx], hex: e.target.value };
-                                setForm(f => ({ ...f, colors: updated }));
+                                const val = e.target.value;
+                                setForm(f => ({
+                                  ...f,
+                                  colors: f.colors.map((c, i) => i === idx ? { ...c, hex: val } : c),
+                                }));
                               }}
                               className="w-10 h-10 rounded-lg border cursor-pointer"
                             />
@@ -624,10 +628,11 @@ export default function AdminProductsPage() {
                             <div className="relative w-10 h-10 rounded-lg overflow-hidden border">
                               <Image src={getImageUrl(color.image)} alt="" fill className="object-cover" sizes="40px" unoptimized />
                               <button onClick={() => {
-                                const updated = [...form.colors];
-                                updated[idx] = { ...updated[idx], image: undefined };
-                                setForm(f => ({ ...f, colors: updated }));
-                              }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
+                              setForm(f => ({
+                                ...f,
+                                colors: f.colors.map((c, i) => i === idx ? { ...c, image: undefined } : c),
+                              }));
+                            }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
                                 <X className="w-3 h-3 text-white" />
                               </button>
                             </div>
@@ -660,11 +665,13 @@ export default function AdminProductsPage() {
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (!file || colorImageTarget < 0) return;
+                      const targetIdx = colorImageTarget;
                       const reader = new FileReader();
                       reader.onload = () => {
-                        const updated = [...form.colors];
-                        updated[colorImageTarget] = { ...updated[colorImageTarget], image: reader.result as string };
-                        setForm(f => ({ ...f, colors: updated }));
+                        setForm(f => ({
+                          ...f,
+                          colors: f.colors.map((c, i) => i === targetIdx ? { ...c, image: reader.result as string } : c),
+                        }));
                       };
                       reader.readAsDataURL(file);
                       if (colorImageRef.current) colorImageRef.current.value = '';
@@ -684,9 +691,11 @@ export default function AdminProductsPage() {
                           className="input-field flex-1"
                           value={quilt.name}
                           onChange={e => {
-                            const updated = [...form.quiltPatterns];
-                            updated[idx] = { ...updated[idx], name: e.target.value };
-                            setForm(f => ({ ...f, quiltPatterns: updated }));
+                            const val = e.target.value;
+                            setForm(f => ({
+                              ...f,
+                              quiltPatterns: f.quiltPatterns.map((q, i) => i === idx ? { ...q, name: val } : q),
+                            }));
                           }}
                           placeholder="Pattern name (e.g. Diamond, Wave)"
                         />
@@ -694,9 +703,10 @@ export default function AdminProductsPage() {
                           <div className="relative w-16 h-16 rounded-lg overflow-hidden border shrink-0">
                             <Image src={getImageUrl(quilt.image)} alt="" fill className="object-cover" sizes="64px" unoptimized />
                             <button onClick={() => {
-                              const updated = [...form.quiltPatterns];
-                              updated[idx] = { ...updated[idx], image: '' };
-                              setForm(f => ({ ...f, quiltPatterns: updated }));
+                              setForm(f => ({
+                                ...f,
+                                quiltPatterns: f.quiltPatterns.map((q, i) => i === idx ? { ...q, image: '' } : q),
+                              }));
                             }} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100">
                               <X className="w-3 h-3 text-white" />
                             </button>
@@ -730,11 +740,13 @@ export default function AdminProductsPage() {
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (!file || quiltImageTarget < 0) return;
+                      const targetIdx = quiltImageTarget;
                       const reader = new FileReader();
                       reader.onload = () => {
-                        const updated = [...form.quiltPatterns];
-                        updated[quiltImageTarget] = { ...updated[quiltImageTarget], image: reader.result as string };
-                        setForm(f => ({ ...f, quiltPatterns: updated }));
+                        setForm(f => ({
+                          ...f,
+                          quiltPatterns: f.quiltPatterns.map((q, i) => i === targetIdx ? { ...q, image: reader.result as string } : q),
+                        }));
                       };
                       reader.readAsDataURL(file);
                       if (quiltImageRef.current) quiltImageRef.current.value = '';

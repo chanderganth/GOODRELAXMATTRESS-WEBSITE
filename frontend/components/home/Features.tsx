@@ -9,8 +9,8 @@ const features = [
   },
   {
     icon: Truck,
-    title: 'Free Delivery',
-    description: 'Free home delivery across India. We deliver directly from our factory to your door.',
+    title: 'Door Delivery',
+    description: 'Free door-to-door delivery in select cities. Check your pincode at checkout to see if we deliver to your area.',
     color: 'bg-green-50 text-green-600',
   },
   {

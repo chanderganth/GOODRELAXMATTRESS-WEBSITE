@@ -80,6 +80,7 @@ function AdminLoginGate({ children }: { children: React.ReactNode }) {
           <Link href="/admin/orders" className="hover:text-[#e8b85d] transition-colors">Orders</Link>
           <Link href="/admin/customers" className="hover:text-[#e8b85d] transition-colors">Customers</Link>
           <Link href="/admin/stock" className="hover:text-[#e8b85d] transition-colors">Stock</Link>
+          <Link href="/admin/delivery" className="hover:text-[#e8b85d] transition-colors">Delivery</Link>
         </div>
         <button
           onClick={() => { logout(); toast.success('Logged out'); }}

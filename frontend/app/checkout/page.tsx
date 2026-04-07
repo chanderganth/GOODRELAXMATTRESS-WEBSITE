@@ -7,9 +7,10 @@ import { generatePDFQuotation } from '@/components/PDFQuotation';
 import api from '@/lib/api';
 import type { Order } from '@/lib/types';
 import { saveLocalOrder } from '@/lib/localOrders';
+import { checkDelivery, DeliveryCheckResult } from '@/lib/deliveryZones';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, Check, FileText, User, MapPin, Phone, Mail } from 'lucide-react';
+import { ShoppingBag, Check, FileText, User, MapPin, Phone, Mail, Truck, AlertTriangle, Package } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
@@ -19,6 +20,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     name: '', phone: '', email: '', address: '', city: '', pincode: '',
   });
+  const [deliveryResult, setDeliveryResult] = useState<DeliveryCheckResult | null>(null);
 
   const buildLocalOrder = (orderData: {
     customer: {
@@ -49,6 +51,16 @@ export default function CheckoutPage() {
     };
   };
 
+  const handlePincodeChange = (val: string) => {
+    const cleaned = val.replace(/\D/g, '');
+    setForm(f => ({ ...f, pincode: cleaned }));
+    if (cleaned.length === 6) {
+      setDeliveryResult(checkDelivery(cleaned));
+    } else {
+      setDeliveryResult(null);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!form.name || !form.phone || !form.address) {
       toast.error('Please fill all required fields');
@@ -56,6 +68,14 @@ export default function CheckoutPage() {
     }
     if (state.items.length === 0) {
       toast.error('Cart is empty');
+      return;
+    }
+    if (!form.pincode || form.pincode.length !== 6) {
+      toast.error('Please enter your pincode to check delivery availability');
+      return;
+    }
+    if (deliveryResult && deliveryResult.type === 'unavailable') {
+      toast.error('Delivery is not available at this pincode. Please contact us.');
       return;
     }
 
@@ -162,11 +182,39 @@ export default function CheckoutPage() {
                   onChange={e => setForm(f => ({ ...f, city: e.target.value }))} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Pincode</label>
-                <input className="input-field" placeholder="560001" value={form.pincode}
-                  onChange={e => setForm(f => ({ ...f, pincode: e.target.value }))} />
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Pincode *</label>
+                <input className="input-field" placeholder="560001" maxLength={6} value={form.pincode}
+                  onChange={e => handlePincodeChange(e.target.value)} />
               </div>
             </div>
+
+            {/* Delivery Status */}
+            {deliveryResult && (
+              <div className={`mt-4 rounded-xl p-4 flex items-start gap-3 border ${
+                deliveryResult.type === 'door' ? 'bg-green-50 border-green-200' :
+                deliveryResult.type === 'pickup' ? 'bg-amber-50 border-amber-200' :
+                'bg-red-50 border-red-200'
+              }`}>
+                {deliveryResult.type === 'door' && <Truck className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />}
+                {deliveryResult.type === 'pickup' && <Package className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />}
+                {deliveryResult.type === 'unavailable' && <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />}
+                <div>
+                  <p className={`font-medium text-sm ${
+                    deliveryResult.type === 'door' ? 'text-green-700' :
+                    deliveryResult.type === 'pickup' ? 'text-amber-700' : 'text-red-700'
+                  }`}>{deliveryResult.message}</p>
+                  {deliveryResult.type === 'door' && (
+                    <p className="text-xs text-green-600 mt-1">Free door-to-door delivery included</p>
+                  )}
+                  {deliveryResult.type === 'pickup' && deliveryResult.zone && (
+                    <p className="text-xs text-amber-600 mt-1">{deliveryResult.zone.note || 'Pickup from nearest distribution point'}</p>
+                  )}
+                  {deliveryResult.type === 'unavailable' && (
+                    <p className="text-xs text-red-600 mt-1">Contact us for alternative delivery arrangements</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Items Summary */}
@@ -216,11 +264,21 @@ export default function CheckoutPage() {
             <span className="text-xl font-bold text-[#e8b85d]">{formatPrice(totalPrice)}</span>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-5 flex items-start gap-2">
-            <Check className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-            <div className="text-xs text-green-700">
-              <div className="font-medium mb-0.5">Expected Delivery: {getExpectedDelivery(7)}</div>
-              <div className="text-green-600">Free delivery across India</div>
+          <div className={`${deliveryResult?.type === 'unavailable' ? 'bg-red-50 border-red-200' : deliveryResult?.type === 'pickup' ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'} border rounded-xl p-3 mb-5 flex items-start gap-2`}>
+            {deliveryResult?.type === 'unavailable' ? (
+              <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+            ) : deliveryResult?.type === 'pickup' ? (
+              <Package className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            ) : (
+              <Check className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+            )}
+            <div className="text-xs">
+              <div className={`font-medium mb-0.5 ${deliveryResult?.type === 'unavailable' ? 'text-red-700' : deliveryResult?.type === 'pickup' ? 'text-amber-700' : 'text-green-700'}`}>
+                Expected Delivery: {getExpectedDelivery(deliveryResult?.zone?.estimatedDays || 7)}
+              </div>
+              <div className={deliveryResult?.type === 'unavailable' ? 'text-red-600' : deliveryResult?.type === 'pickup' ? 'text-amber-600' : 'text-green-600'}>
+                {deliveryResult?.type === 'door' ? 'Free door delivery' : deliveryResult?.type === 'pickup' ? 'Pickup from distribution point' : deliveryResult?.type === 'unavailable' ? 'Delivery not available — contact us' : 'Enter pincode to check delivery'}
+              </div>
             </div>
           </div>
 

@@ -61,6 +61,7 @@ export default function AdminPage() {
             { href: '/admin/orders', title: 'Order Management', desc: 'Track and update statuses' },
             { href: '/admin/customers', title: 'Customers', desc: 'View customer records' },
             { href: '/admin/stock', title: 'Stock Tracking', desc: 'Foam blocks and fabrics' },
+            { href: '/admin/delivery', title: 'Delivery Zones', desc: 'Manage delivery areas' },
           ].map(item => (
             <Link key={item.href} href={item.href} className="card p-5 hover:shadow-md transition-shadow">
               <h2 className="font-semibold text-[#1a1a2e] mb-1">{item.title}</h2>

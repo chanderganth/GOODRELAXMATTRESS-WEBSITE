@@ -748,10 +748,17 @@ export default function AdminProductsPage() {
               {/* Footer */}
               <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
                 <button onClick={closeForm} className="btn-outline">Cancel</button>
-                <button onClick={handleSaveProduct} disabled={saving} className="btn-primary flex items-center gap-2 disabled:opacity-60">
-                  <Save className="w-4 h-4" />
-                  {saving ? 'Saving...' : editingId ? 'Update Product' : 'Create Product'}
-                </button>
+                {editingId ? (
+                  <button onClick={handleSaveProduct} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 disabled:opacity-60 transition-colors">
+                    <Pencil className="w-4 h-4" />
+                    {saving ? 'Updating...' : 'Update Product'}
+                  </button>
+                ) : (
+                  <button onClick={handleSaveProduct} disabled={saving} className="btn-primary flex items-center gap-2 disabled:opacity-60">
+                    <Save className="w-4 h-4" />
+                    {saving ? 'Saving...' : 'Save Product'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
